@@ -1,0 +1,38 @@
+# Auto-generated from k8s/templates/postgres.yaml
+# Edit project.yaml and run 'make generate-k8s' to regenerate. Do not edit by hand.
+---
+# CloudNativePG Cluster for Immich.
+#
+# CNPG automatically creates a secret named "immich-db-app" in the
+# ${NAMESPACE} namespace containing the connection URI and credentials.
+# values/immich.yaml references this secret via DATABASE_URL.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: immich-db
+  namespace: ${NAMESPACE}
+spec:
+  instances: 1
+
+  storage:
+    storageClass: local-path
+    size: ${DB_STORAGE_SIZE}
+
+  bootstrap:
+    initdb:
+      database: immich
+      owner: immich
+      postInitApplicationSQL:
+        - CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+        - CREATE EXTENSION IF NOT EXISTS cube;
+        - CREATE EXTENSION IF NOT EXISTS earthdistance;
+        - CREATE EXTENSION IF NOT EXISTS vector;
+
+  # Resource limits appropriate for a home lab node.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi

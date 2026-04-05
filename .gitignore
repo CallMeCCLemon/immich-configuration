@@ -1,0 +1,3 @@
+# Real secrets — never commit
+k8s/secrets.yaml
+.idea/

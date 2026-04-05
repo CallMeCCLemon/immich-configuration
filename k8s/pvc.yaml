@@ -1,0 +1,15 @@
+# PersistentVolumeClaim for Immich's photo/video library.
+# This must be applied before deploying the Helm chart because values/immich.yaml
+# references it via immich.persistence.library.existingClaim.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-library
+  namespace: immich
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 50Gi

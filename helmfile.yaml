@@ -1,0 +1,13 @@
+repositories:
+  - name: immich
+    url: https://immich-app.github.io/immich-charts
+
+releases:
+  - name: immich
+    namespace: immich
+    # Pin the chart version and update intentionally.
+    # Find the latest: helm search repo immich/immich --versions
+    chart: immich/immich
+    createNamespace: false
+    values:
+      - values/immich.yaml

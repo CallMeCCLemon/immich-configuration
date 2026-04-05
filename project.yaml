@@ -1,0 +1,36 @@
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# project.yaml — single source of truth for all project-specific configuration.
+#
+# After editing:
+#   1. Run `make generate-k8s` to regenerate the k8s manifests from k8s/templates/.
+#   2. Review `git diff k8s/` and commit.
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# ── Cluster ───────────────────────────────────────────────────────────────────
+
+# namespace: the k8s namespace where all Immich resources are deployed.
+namespace: immich
+
+# ── Public Access ─────────────────────────────────────────────────────────────
+
+# public_domain: the public hostname served via Cloudflare tunnel.
+#   Setup steps:
+#     1. Create a tunnel in the Cloudflare Zero Trust dashboard.
+#     2. Set its public hostname to this domain, pointing to:
+#          http://immich-server.<namespace>:2283
+#     3. Copy k8s/secrets.example.yaml → k8s/secrets.yaml, fill in your token, apply.
+public_domain: photos.latentlab.cc
+
+# tunnel_secret_name: name of the k8s Secret holding the Cloudflare tunnel token.
+#   k8s/secrets.yaml (gitignored) must contain a Secret with this name.
+#   See k8s/secrets.example.yaml for the required format.
+tunnel_secret_name: immich-tunnel-creds
+
+# ── Storage ───────────────────────────────────────────────────────────────────
+
+# library_storage_size: size of the PVC for Immich's photo/video library.
+#   This PVC is pre-created (immich.persistence.library.existingClaim in values/).
+library_storage_size: 50Gi
+
+# db_storage_size: size of the PVC for the CloudNativePG PostgreSQL cluster.
+db_storage_size: 8Gi
