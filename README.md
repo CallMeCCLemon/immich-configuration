@@ -24,7 +24,7 @@ Personal Kubernetes configuration for [Immich](https://immich.app) — a self-ho
 ## Prerequisites
 
 - A Kubernetes cluster running **k3s**
-- [CloudNativePG operator](https://cloudnative-pg.io/docs/installation/) installed on the cluster
+- [CloudNativePG operator](https://cloudnative-pg.io/docs/installation/) installed on the cluster (`./scripts/install-cnpg.sh`)
 - `kubectl` configured to talk to the cluster
 - `helm` and `helmfile` installed locally (`brew install helm helmfile`)
 - A [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) created in the Zero Trust dashboard with a token ready
