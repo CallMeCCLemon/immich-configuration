@@ -46,6 +46,7 @@ generate-k8s:
 #   kubectl apply -f k8s/secrets.yaml
 deploy-infra:
 	kubectl apply -f k8s/namespace.yaml
+	kubectl apply -f k8s/pv-library.yaml
 	kubectl apply -f k8s/pvc.yaml
 	kubectl apply -f k8s/postgres.yaml
 	kubectl apply -f k8s/cloudflared.yaml

@@ -30,7 +30,12 @@ tunnel_secret_name: immich-tunnel-creds
 
 # library_storage_size: size of the PVC for Immich's photo/video library.
 #   This PVC is pre-created (immich.persistence.library.existingClaim in values/).
-library_storage_size: 50Gi
+#   NOTE: on this cluster the library PVC is hand-bound to a static PV
+#   (see k8s/pv-library.yaml) because server0's root disk is too small.
+#   Running `make generate-k8s` will overwrite that binding in k8s/pvc.yaml —
+#   check the diff before committing. Keep this value in sync with the
+#   `storage:` requested in k8s/pvc.yaml regardless.
+library_storage_size: 300Gi
 
 # db_storage_size: size of the PVC for the CloudNativePG PostgreSQL cluster.
 db_storage_size: 8Gi

@@ -1,6 +1,11 @@
 # PersistentVolumeClaim for Immich's photo/video library.
 # This must be applied before deploying the Helm chart because values/immich.yaml
 # references it via immich.persistence.library.existingClaim.
+#
+# HAND-MAINTAINED, NOT GENERATED: this binds directly to the static PV in
+# k8s/pv-library.yaml (see that file for why). Do not run `make generate-k8s`
+# without checking the diff here first — the template would overwrite the
+# volumeName below with a plain dynamically-provisioned claim.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -10,6 +15,7 @@ spec:
   accessModes:
     - ReadWriteOnce
   storageClassName: local-path
+  volumeName: immich-library-bulk
   resources:
     requests:
-      storage: 50Gi
+      storage: 300Gi

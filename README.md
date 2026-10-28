@@ -19,7 +19,7 @@ Personal Kubernetes configuration for [Immich](https://immich.app) — a self-ho
 - **PostgreSQL** managed by the [CloudNativePG](https://cloudnative-pg.io) operator (must be pre-installed on the cluster)
 - **Valkey** (Redis-compatible cache) included in the Immich chart
 - **Cloudflare Tunnel** (`cloudflared` Deployment, 2 replicas) for public internet access — no ingress controller or open ports required
-- **Storage** via k3s's built-in `local-path` provisioner
+- **Storage** via k3s's built-in `local-path` provisioner. On this deployment the library PVC is hand-bound to a static PV (`k8s/pv-library.yaml`) on a separate large disk, since the node's default `local-path` root disk is too small for the full library — see comments in that file and in `k8s/pvc.yaml` before running `make generate-k8s`.
 
 ## Prerequisites
 
