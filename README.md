@@ -18,7 +18,7 @@ Personal Kubernetes configuration for [Immich](https://immich.app) — a self-ho
 - **Immich** deployed via the official [`immich-app/immich`](https://github.com/immich-app/immich-charts) Helm chart
 - **PostgreSQL** managed by the [CloudNativePG](https://cloudnative-pg.io) operator (must be pre-installed on the cluster)
 - **Valkey** (Redis-compatible cache) included in the Immich chart
-- **Cloudflare Tunnel** (`cloudflared` Deployment, 2 replicas) for public internet access — no ingress controller or open ports required
+- **Cloudflare Tunnel** for public internet access: a `TunnelRoute` on the cluster's shared tunnel, run by [Cloudflare-Tunnel-Operator](https://github.com/CallMeCCLemon/Cloudflare-Tunnel-Operator). No ingress controller, open ports, or per-project cloudflared
 - **Storage** via k3s's built-in `local-path` provisioner. On this deployment the library PVC is hand-bound to a static PV (`k8s/pv-library.yaml`) on a separate large disk, since the node's default `local-path` root disk is too small for the full library — see comments in that file and in `k8s/pvc.yaml` before running `make generate-k8s`.
 
 ## Prerequisites
@@ -27,7 +27,7 @@ Personal Kubernetes configuration for [Immich](https://immich.app) — a self-ho
 - [CloudNativePG operator](https://cloudnative-pg.io/docs/installation/) installed on the cluster (`./scripts/install-cnpg.sh`)
 - `kubectl` configured to talk to the cluster
 - `helm` and `helmfile` installed locally (`brew install helm helmfile`)
-- A [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) created in the Zero Trust dashboard with a token ready
+- [Cloudflare-Tunnel-Operator](https://github.com/CallMeCCLemon/Cloudflare-Tunnel-Operator) running on the cluster with a `ClusterTunnel` (named in `tunnel_name`)
 
 ## Setup
 
@@ -38,7 +38,8 @@ Edit `project.yaml` to match your environment:
 ```yaml
 namespace: immich
 public_domain: photos.yourdomain.com   # your Cloudflare public hostname
-tunnel_secret_name: immich-tunnel-creds
+tunnel_name: home                      # the shared ClusterTunnel
+tunnel_adopt_dns: false                # true only if the hostname already has a DNS record
 library_storage_size: 100Gi
 db_storage_size: 8Gi
 ```
@@ -51,25 +52,22 @@ make generate-k8s
 
 Review the diff with `git diff k8s/` before committing.
 
-### 2. Configure your Cloudflare Tunnel
+### 2. Public hostname
 
-In the [Cloudflare Zero Trust dashboard](https://one.dash.cloudflare.com), set the tunnel's public hostname to:
-
-```
-http://immich-server.immich:2283
-```
-
-### 3. Create the tunnel secret
+Nothing to set up by hand. `make deploy-infra` applies `k8s/tunnelroute.yaml`, and
+Cloudflare-Tunnel-Operator adds `public_domain` to the shared tunnel, pointed at
+`http://immich-server.<namespace>:2283`, and manages its proxied DNS record. Check it:
 
 ```bash
-cp k8s/secrets.example.yaml k8s/secrets.yaml
-# Edit k8s/secrets.yaml — replace <your-cloudflare-tunnel-token> with your real token
-kubectl apply -f k8s/secrets.yaml
+kubectl -n immich get tunnelroute immich
 ```
 
-`k8s/secrets.yaml` is gitignored and should never be committed.
+It reports `ServiceNotFound` until the Helm release has created `immich-server`.
+`DNSRecordConflict` means the hostname already has a DNS record from an older setup:
+set `tunnel_adopt_dns: true` in `project.yaml`, regenerate, and apply
+`k8s/tunnelroute.yaml` again.
 
-### 4. Deploy everything
+### 3. Deploy everything
 
 ```bash
 make deploy-all
@@ -79,13 +77,13 @@ This runs in order:
 1. Creates the `immich` namespace
 2. Creates the library PVC
 3. Applies the CloudNativePG cluster (PostgreSQL)
-4. Applies the cloudflared Deployment
+4. Applies the TunnelRoute (public hostname on the shared tunnel)
 5. Runs `helmfile apply` to install the Immich Helm release
 
 Or run the steps individually:
 
 ```bash
-make deploy-infra   # namespace + PVC + postgres + cloudflared
+make deploy-infra   # namespace + PV/PVC + postgres + TunnelRoute
 make helm-deploy    # helmfile apply
 ```
 

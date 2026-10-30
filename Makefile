@@ -11,7 +11,8 @@ cfg = $(shell grep "^$(1):" project.yaml | head -1 | awk '{print $$2}')
 
 NAMESPACE             := $(call cfg,namespace)
 PUBLIC_DOMAIN         := $(call cfg,public_domain)
-TUNNEL_SECRET         := $(call cfg,tunnel_secret_name)
+TUNNEL_NAME           := $(call cfg,tunnel_name)
+TUNNEL_ADOPT_DNS      := $(call cfg,tunnel_adopt_dns)
 LIBRARY_STORAGE_SIZE  := $(call cfg,library_storage_size)
 DB_STORAGE_SIZE       := $(call cfg,db_storage_size)
 
@@ -28,7 +29,8 @@ generate-k8s:
 	@export \
 	    NAMESPACE="$(NAMESPACE)" \
 	    PUBLIC_DOMAIN="$(PUBLIC_DOMAIN)" \
-	    TUNNEL_SECRET="$(TUNNEL_SECRET)" \
+	    TUNNEL_NAME="$(TUNNEL_NAME)" \
+	    TUNNEL_ADOPT_DNS="$(TUNNEL_ADOPT_DNS)" \
 	    LIBRARY_STORAGE_SIZE="$(LIBRARY_STORAGE_SIZE)" \
 	    DB_STORAGE_SIZE="$(DB_STORAGE_SIZE)"; \
 	for tmpl in k8s/templates/*.yaml; do \
@@ -38,18 +40,15 @@ generate-k8s:
 	done
 	@echo "Done. Review changes with 'git diff k8s/' and commit if correct."
 
-# Apply the namespace, library PVC, tunnel secret, and cloudflared deployment.
-# Run this before helm-deploy. Apply secrets.yaml separately (it is gitignored).
-#
-#   cp k8s/secrets.example.yaml k8s/secrets.yaml
-#   # edit k8s/secrets.yaml with your real token
-#   kubectl apply -f k8s/secrets.yaml
+# Apply the namespace, library PV/PVC, postgres, and the TunnelRoute that
+# publishes public_domain through the shared Cloudflare tunnel. Run this before
+# helm-deploy; the route goes Ready once the Helm release creates immich-server.
 deploy-infra:
 	kubectl apply -f k8s/namespace.yaml
 	kubectl apply -f k8s/pv-library.yaml
 	kubectl apply -f k8s/pvc.yaml
 	kubectl apply -f k8s/postgres.yaml
-	kubectl apply -f k8s/cloudflared.yaml
+	kubectl apply -f k8s/tunnelroute.yaml
 
 # Deploy / upgrade the Immich Helm release via helmfile.
 # Requires: helmfile, helm (brew install helmfile helm)
